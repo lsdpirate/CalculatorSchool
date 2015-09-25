@@ -21,7 +21,7 @@ public class Main {
         System.out.println("********************");
         System.out.println("*****Calculator*****");
         System.out.println("********************");
-        System.out.println("Since the project is at an early stage of developement");
+        System.out.println("Since the project is at an early stage of development");
         System.out.println("To make a number negative it's necessary to subtract it");
         System.out.println("From 0 (ex.  -8 -> 0 - 8). Does not work yet with mults/divs");
         System.out.print("Insert the expression: ");

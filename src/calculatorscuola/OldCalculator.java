@@ -56,8 +56,10 @@ public class OldCalculator {
      */
     private void parseCalculus(String exp) {
 
-        String regex = "(((\\d)*\\.?(\\d)*)((\\+)|(-)|(\\*)|(/)))+((\\d)*\\.?(\\d)*)";
-
+        String regex = "(((\\d)*\\.?(\\d)*) ((\\+)|(-)|(\\*)((-)|(\\+))?|(/)((-)|(\\+))?)) ((\\d)*\\.?(\\d)*)";
+        
+        String numberRegex = "(((\\d)*\\.?(\\d)*)";
+        String operatorRegex = "(\\+) | (-) | ((\\*)(-)?) | ((/)(-)?)";
         //First of all we will have to normalize the string to a non spaceless
         //expression otherwise regex check could fail. This will give the user
         //freedom to write the exp as he wishes.
@@ -97,7 +99,6 @@ public class OldCalculator {
             } else if (splitExp[i].equals("*")) {
 
                 temp = this.c.mult(Double.parseDouble(firstStep[j - 1]), Double.parseDouble(splitExp[i + 1]));
-
                 firstStep[j - 1] = Double.toString(temp);
                 ++i;
 
@@ -107,7 +108,7 @@ public class OldCalculator {
             }
 
         }
-        
+
         //Necessary to remove unused array slots. Since the initialization size
         //was unknown this operation is necessary to avoid screwing up the next
         //iteration.
@@ -118,13 +119,8 @@ public class OldCalculator {
         for (int i = 0; i < splitExp.length; ++i) {
             if (i == 0) {
                 temp = Double.parseDouble(splitExp[0]);
-            } else if (i % 2 != 0) {
-
-                if (splitExp[i].equals("+")) {
-                    temp = this.c.sum(temp, Double.parseDouble(splitExp[i + 1]));
-                } else if (splitExp[i].equals("-")) {
-                    temp = this.c.sub(temp, Double.parseDouble(splitExp[i + 1]));
-                }
+            } else {
+                temp = this.c.sum(temp, Double.parseDouble(splitExp[i]));
             }
 
         }
@@ -135,15 +131,32 @@ public class OldCalculator {
 
         String[] splitExp = new String[exp.length()];
         Arrays.fill(splitExp, "");
+        boolean parsingNumber = true;
         int j = 0;
         for (int i = 0; i < exp.length(); ++i) {
-            if (exp.charAt(i) == '*' || exp.charAt(i) == '+'
-                    || exp.charAt(i) == '/' || exp.charAt(i) == '-') {
-
-                splitExp[++j] += exp.charAt(i);
+            char c = exp.charAt(i);
+//            if (exp.charAt(i) == '*' || exp.charAt(i) == '/') {
+//                parsingNumber = false;
+//                splitExp[++j] += exp.charAt(i);
+//
+//            } else if (exp.charAt(i) == '+' || exp.charAt(i) == '-') {
+//                parsingNumber = false;
+//                splitExp[++j] += exp.charAt(i);
+//            } else {
+//                if (!parsingNumber) {
+//                    ++j;
+//                    parsingNumber = true;
+//                }
+//                splitExp[j] += exp.charAt(i);
+//
+//            }
+            if(c == '+' || c == '-'){
+                splitExp[++j] += c;
+            }else if(c == '*' || c == '/'){
+                splitExp[++j] += c;
                 ++j;
-            } else {
-                splitExp[j] += exp.charAt(i);
+            }else{
+                splitExp[j] += c;
             }
 
         }

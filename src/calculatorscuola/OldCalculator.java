@@ -8,7 +8,6 @@ package calculatorscuola;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.function.Predicate;
-import java.util.regex.Pattern;
 
 /**
  *
@@ -57,108 +56,79 @@ public class OldCalculator {
      */
     private void parseCalculus(String exp) {
 
-        String regex = "((\\d)((\\+)|(-)|(\\*)|(/)))+(\\d)";
+        String regex = "(((\\d)*\\.?(\\d)*)((\\+)|(-)|(\\*)|(/)))+((\\d)*\\.?(\\d)*)";
 
-           //First of all we will have to normalize the string to a non spaceless
-        //expression.
+        //First of all we will have to normalize the string to a non spaceless
+        //expression otherwise regex check could fail. This will give the user
+        //freedom to write the exp as he wishes.
         exp = exp.replaceAll(" ", "");
 
-        //Then we assure that is matches the expression format.
+        //Then we assure that exp matches the expression format.
         if (!exp.matches(regex)) {
             return;
         }
-           //After that we split all the expression elements into an array
+
+        //After that we split all the expression elements into an array
         //for better management.
+        String[] splitExp = this.expStringToArray(exp);
 
-       
-        String [] splitExp = this.expStringToArray(exp);
-
-           //Now we have to look for all the divisions
+        //Now we have to look for all the divisions
         //and multiplications to compute them first.
         //Since the expression will match the regex we can safely assume that
         //every time we find a '/' or a '*' the adjacents values are numbers
         //to divide/multiply.
-        String firstStep = "";
+        //Since we cannot know in advance the length of the expression after the
+        //multiplications/divisions (without a first iteration of the expression)
+        //we initialize the array at the string length. This is not optimal
+        //but saves compute time.
+        String[] firstStep = new String[exp.length()];
+
         double temp = 0;
+        int j = 0;
+
         for (int i = 0; i < splitExp.length; ++i) {
 
             if (splitExp[i].equals("/")) {
-                temp = this.c.div(Double.parseDouble(splitExp[i - 1]), Double.parseDouble(splitExp[i + 1]));
-                firstStep += temp;
+                temp = this.c.div(Double.parseDouble(firstStep[j - 1]), Double.parseDouble(splitExp[i + 1]));
+
+                ++i;
+                firstStep[j - 1] = Double.toString(temp);
 
             } else if (splitExp[i].equals("*")) {
-                temp = this.c.mult(Double.parseDouble(splitExp[i - 1]), Double.parseDouble(splitExp[i + 1]));
-                firstStep += Double.toString(temp);
-                
-            } else if(i < (splitExp.length - 1) && (!(splitExp[i +1].equals("*") || splitExp[i + 1].equals("*")))){
-                firstStep += splitExp[i];
+
+                temp = this.c.mult(Double.parseDouble(firstStep[j - 1]), Double.parseDouble(splitExp[i + 1]));
+
+                firstStep[j - 1] = Double.toString(temp);
+                ++i;
+
+            } else {
+                firstStep[j] = splitExp[i];
+                ++j;
             }
 
         }
-        splitExp = this.expStringToArray(firstStep);
         
-        //Now we have an expression of digits followed by operators only.
-        //It is correct to say that each even element number is an operator
+        //Necessary to remove unused array slots. Since the initialization size
+        //was unknown this operation is necessary to avoid screwing up the next
+        //iteration.
+        splitExp = OldCalculator.cleanArray(firstStep);
+
+        //Now we have an expression of digits followed by sums/subs only.
+        //It is correct to say that each odd element index is an operator.
         for (int i = 0; i < splitExp.length; ++i) {
-            if(i ==0){
+            if (i == 0) {
                 temp = Double.parseDouble(splitExp[0]);
-            }else if(i % 2 != 0){
-                
-                if(splitExp[i].equals("+")){
+            } else if (i % 2 != 0) {
+
+                if (splitExp[i].equals("+")) {
                     temp = this.c.sum(temp, Double.parseDouble(splitExp[i + 1]));
-                }else if(splitExp[i].equals("-")){
+                } else if (splitExp[i].equals("-")) {
                     temp = this.c.sub(temp, Double.parseDouble(splitExp[i + 1]));
+                }
             }
-            }
-                
+
         }
 
-//        String numberRegex = "(-?[1-9](([0-9]){1,9})?)";
-//        String operatorRegex = "";
-//        String expRegex = "(" + numberRegex + "?\\*|/|-|\\+" + numberRegex + "){1,10}";
-//        String [] operator = {"+", "-", "/", "*"};
-//        
-//        String test = "";
-//        for(String str: s){
-//            test += str;
-//        }
-//        System.out.println(test + " " + test.matches(expRegex));
-//        
-//        if(s[0].matches(numberRegex)){
-//            this.c.setFirstOperand(Double.parseDouble(s[0]));
-//        }else {
-//            this.c.setFirstOperand(0);
-//        }
-//        
-//        for(int i = 1; i < s.length; ++i){
-//            
-//            this.c.setSecondOperand(0);
-//            
-//            
-//            
-//            //Fix with something better
-//            if(operator[0].equals(s[i]) || operator[1].equals(s[i]) || operator[2].equals(s[i]) || operator[3].equals(s[i])){
-//                
-//                switch (s[i]) {
-//                    case "+":
-//                        this.c.setSecondOperand(Double.parseDouble(s[++i]));
-//                        this.c.sum();
-//                        break;
-//                    case "-":
-//                        this.c.setSecondOperand(Double.parseDouble(s[++i]));
-//                        this.c.sub();
-//                        break;
-//                    case "*":
-//                        this.c.setSecondOperand(Double.parseDouble(s[++i]));
-//                        this.c.mult();
-//                        break;
-//                    case "/":
-//                        this.c.setSecondOperand(Double.parseDouble(s[++i]));
-//                        this.c.div();
-//                        break;
-//                }
-//            }
-//        }
     }
 
     private String[] expStringToArray(String exp) {
@@ -179,10 +149,24 @@ public class OldCalculator {
         }
 
         ArrayList<String> utilityArray = new ArrayList<>(Arrays.asList(splitExp));
-        Predicate <String> p = (s)-> s.equals("");
+        Predicate<String> p = (s) -> s.equals("");
         utilityArray.removeIf(p);
-        splitExp = new String [0];
+        splitExp = new String[0];
         splitExp = utilityArray.toArray(splitExp);
         return splitExp;
+    }
+
+    private static String[] cleanArray(String[] ar) {
+        ArrayList<String> utilityArray = new ArrayList<>();
+
+        for (int i = 0; i < ar.length; ++i) {
+            if (ar[i] != null) {
+                utilityArray.add(ar[i]);
+            }
+
+        }
+        String[] result = new String[0];
+        result = utilityArray.toArray(result);
+        return result;
     }
 }

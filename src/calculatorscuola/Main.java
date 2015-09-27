@@ -20,10 +20,7 @@ public class Main {
         String i1, i2, i3;
         System.out.println("********************");
         System.out.println("*****Calculator*****");
-        System.out.println("********************");
-        System.out.println("Since the project is at an early stage of development");
-        System.out.println("To make the first number negative just subtract it");
-        System.out.println("From 0 (ex.  -8 -> 0 - 8). Does not work yet with mults/divs");
+        
         System.out.print("Insert the expression: ");
      /*   System.out.print("Enter the first operand: ");
         i1 = scanner.nextLine();

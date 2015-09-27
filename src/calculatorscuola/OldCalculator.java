@@ -56,20 +56,25 @@ public class OldCalculator {
      */
     private void parseCalculus(String exp) {
 
-        String regex = "(((\\d)*\\.?(\\d)*) ((\\+)|(-)|(\\*)((-)|(\\+))?|(/)((-)|(\\+))?)) ((\\d)*\\.?(\\d)*)";
         
-        String numberRegex = "(((\\d)*\\.?(\\d)*)";
-        String operatorRegex = "(\\+) | (-) | ((\\*)(-)?) | ((/)(-)?)";
+        
+        String numberRegex = "((-)?(\\d*)(\\.?)(\\d*))";
+        String operatorRegex = "((\\+)|(-)|((\\*))|((/)))";
+        String regex = "(" + numberRegex + operatorRegex + numberRegex + ")*";
         //First of all we will have to normalize the string to a non spaceless
         //expression otherwise regex check could fail. This will give the user
         //freedom to write the exp as he wishes.
         exp = exp.replaceAll(" ", "");
 
         //Then we assure that exp matches the expression format.
+        
+        System.out.println(exp.matches(regex));
+        System.out.println(exp.matches(numberRegex));
+        
         if (!exp.matches(regex)) {
-            return;
+           return;
         }
-
+        
         //After that we split all the expression elements into an array
         //for better management.
         String[] splitExp = this.expStringToArray(exp);

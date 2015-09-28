@@ -9,7 +9,7 @@ package calculatorscuola;
  *
  * @author lsdpirate
  */
-public class Calc {
+public class Calc implements ICalculator{
 
     protected double o1, o2, r;
 
@@ -36,7 +36,7 @@ public class Calc {
     public double getResult() {
         return this.r;
     }
-
+    @Override
     public double sum() {
         this.r = o1 + o2;
         o1 = r;
@@ -44,19 +44,26 @@ public class Calc {
         return r;
     }
 
+    @Override
     public double sub() {
         this.r = o1 - o2;
         o1 = r;
         return r;
     }
 
+    @Override
     public double mult() {
         this.r = o1 * o2;
         o1 = r;
         return r;
     }
 
-    public double div() {
+    @Override
+    public double div() throws ArithmeticException{
+        
+        if(this.o2 == 0){
+            throw new ArithmeticException("Cannot divide by " + o2);
+        }
         this.r = o1 / o2;
         o1 = r;
         return r;

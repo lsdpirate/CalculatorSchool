@@ -15,13 +15,13 @@ import java.util.function.Predicate;
  */
 public class OldCalculator {
 
-    private Calc c;
+    private ScientificCalc c;
 
     public OldCalculator() {
-        this.c = new Calc();
+        this.c = new ScientificCalc();
     }
 
-    public double Calculate(String s) {
+    public double Calculate(String s) throws ArithmeticException{
         double r = Double.NaN;
         this.parseCalculus(s);
         r = this.c.getResult();
@@ -52,33 +52,46 @@ public class OldCalculator {
     }
 
     /**
-     * @deprecated @param s
+     * @deprecated @param exp
      */
-    private void parseCalculus(String exp) {
+    private void parseCalculus(String exp) throws ArithmeticException {
 
-        
-        
         String numberRegex = "((-)?(\\d*)(\\.?)(\\d*))";
         String operatorRegex = "((\\+)|(-)|((\\*))|((/)))";
-        String regex = "(" + numberRegex + operatorRegex + numberRegex + ")*";
+        
+        String sqrtRegex = "(sqrt\\(" + numberRegex + "\\))";
+        String operandRegex = "(" + numberRegex + "|" + sqrtRegex + ")";
+        String regex = "(" + operandRegex + operatorRegex + operandRegex + ")*";
         //First of all we will have to normalize the string to a non spaceless
         //expression otherwise regex check could fail. This will give the user
         //freedom to write the exp as he wishes.
         exp = exp.replaceAll(" ", "");
 
         //Then we assure that exp matches the expression format.
-        
         System.out.println(exp.matches(regex));
-        System.out.println(exp.matches(numberRegex));
-        
+        System.out.println(exp.matches(sqrtRegex));
+
         if (!exp.matches(regex)) {
-           return;
+            return;
         }
-        
+
         //After that we split all the expression elements into an array
         //for better management.
         String[] splitExp = this.expStringToArray(exp);
-
+        
+        //Now we calculate preliminar variables like sqrt() or sin()
+        for (int i = 0; i < splitExp.length; i++) {
+            
+            if(splitExp[i].matches(sqrtRegex)){
+                
+                int f = splitExp[i].indexOf('(');
+                int s = splitExp[i].indexOf(')');
+                String n = splitExp[i].substring(f + 1, s);
+                double sqrt = Double.parseDouble(n);
+                sqrt = this.c.sqrt(sqrt);
+                splitExp[i] = Double.toString(sqrt);
+            }
+        }
         //Now we have to look for all the divisions
         //and multiplications to compute them first.
         //Since the expression will match the regex we can safely assume that
@@ -155,12 +168,12 @@ public class OldCalculator {
 //                splitExp[j] += exp.charAt(i);
 //
 //            }
-            if(c == '+' || c == '-'){
+            if (c == '+' || c == '-') {
                 splitExp[++j] += c;
-            }else if(c == '*' || c == '/'){
+            } else if (c == '*' || c == '/') {
                 splitExp[++j] += c;
                 ++j;
-            }else{
+            } else {
                 splitExp[j] += c;
             }
 

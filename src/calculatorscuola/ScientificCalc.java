@@ -15,6 +15,14 @@ public class ScientificCalc extends Calc {
 
     }
 
+    public double sqrt(){
+        this.r = Math.sqrt(this.o1);
+        return r;
+    }
+    public double sqrt(double o){
+        super.setFirstOperand(o);
+        return this.sqrt();
+    }
     public double pow() {
         double r = 1;
         
@@ -27,8 +35,8 @@ public class ScientificCalc extends Calc {
     }
     public double pow(double o1, double o2){
         
-        this.o1 = o1;
-        this.o2 = o1;
+        super.setFirstOperand(o1);
+        super.setSecondOperand(o2);
         this.pow();
         return r;
     }

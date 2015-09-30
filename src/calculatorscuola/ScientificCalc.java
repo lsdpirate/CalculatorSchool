@@ -62,5 +62,12 @@ public class ScientificCalc extends Calc {
         this.cos();
         return this.r;
     }
+    public double cos(double o1){
+        return this.cos(o1, 0);
+        
+    }
+    public double sin(double o1){
+        return this.sin(o1, 0);
+    }
     
 }

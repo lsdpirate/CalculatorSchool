@@ -16,81 +16,83 @@ import java.util.function.Predicate;
 public class OldCalculator {
 
     private ScientificCalc c;
+    private final String numberRegex = "((-)?(\\d*)(\\.?)(\\d*))";
+    private final String operatorRegex = "((\\+)|(-)|((\\*))|((/)))";
+    private final String sqrtRegex = "(sqrt\\(" + numberRegex + "\\))";
+    private final String sinRegex = "(sin\\(" + numberRegex + "\\))";
+    private final String cosRegex = "(cos\\(" + numberRegex + "\\))";
+    private final String operandRegex = "(" + numberRegex + "|" + sqrtRegex + "|" + cosRegex + "|" + sinRegex + ")";
+    private final String expressionRegex = sinRegex + "|" + cosRegex + "|" + sqrtRegex + "|(" + operandRegex + operatorRegex + operandRegex + ")*";
 
     public OldCalculator() {
         this.c = new ScientificCalc();
     }
 
-    public double Calculate(String s) throws ArithmeticException{
+    /**
+     * Parses, calculates and returns the result of any expression given in the
+     * for of a string.
+     * @param s A correctly written expression.
+     * @return The result of given expression.
+     * @throws ArithmeticException If the expression is malformed.
+     */
+    public double Calculate(String s) throws ArithmeticException {
         double r = Double.NaN;
         this.parseCalculus(s);
         r = this.c.getResult();
         return r;
     }
 
-    public double Calculate(String o1, String s, String o2) {
-
-        double r = Double.NaN;
-
-        double op1 = Double.parseDouble(o1);
-        double op2 = Double.parseDouble(o2);
-
-        this.c.setFirstOperand(op1);
-        this.c.setSecondOperand(op2);
-
-        if (s.equals("+")) {
-            this.c.sum();
-        } else if (s.equals("-")) {
-            this.c.sub();
-        } else if (s.equals("*")) {
-            this.c.mult();
-        } else if (s.equals("/")) {
-            this.c.div();
-        }
-        r = this.c.getResult();
-        return r;
-    }
+    
 
     /**
      * @deprecated @param exp
      */
     private void parseCalculus(String exp) throws ArithmeticException {
 
-        String numberRegex = "((-)?(\\d*)(\\.?)(\\d*))";
-        String operatorRegex = "((\\+)|(-)|((\\*))|((/)))";
-        
-        String sqrtRegex = "(sqrt\\(" + numberRegex + "\\))";
-        String operandRegex = "(" + numberRegex + "|" + sqrtRegex + ")";
-        String regex = "(" + operandRegex + operatorRegex + operandRegex + ")*";
+//        String numberRegex = "((-)?(\\d*)(\\.?)(\\d*))";
+//        String operatorRegex = "((\\+)|(-)|((\\*))|((/)))";
+//        
+//        String sqrtRegex = "(sqrt\\(" + numberRegex + "\\))";
+//        String operandRegex = "(" + numberRegex + "|" + sqrtRegex + ")";
+//        String regex = "(" + operandRegex + operatorRegex + operandRegex + ")*";
         //First of all we will have to normalize the string to a non spaceless
         //expression otherwise regex check could fail. This will give the user
         //freedom to write the exp as he wishes.
         exp = exp.replaceAll(" ", "");
 
         //Then we assure that exp matches the expression format.
-        System.out.println(exp.matches(regex));
-        System.out.println(exp.matches(sqrtRegex));
+        
+//        System.out.println(exp.matches(expressionRegex));
+//        System.out.println(exp.matches(sqrtRegex));
 
-        if (!exp.matches(regex)) {
-            return;
+        if (!exp.matches(expressionRegex)) {
+            throw new ArithmeticException("The expression wasn't recognized");
         }
 
         //After that we split all the expression elements into an array
         //for better management.
         String[] splitExp = this.expStringToArray(exp);
-        
+
         //Now we calculate preliminar variables like sqrt() or sin()
         for (int i = 0; i < splitExp.length; i++) {
-            
-            if(splitExp[i].matches(sqrtRegex)){
-                
+
+            if (splitExp[i].matches(sqrtRegex + "|" + cosRegex + "|" + sinRegex)) {
+
                 int f = splitExp[i].indexOf('(');
                 int s = splitExp[i].indexOf(')');
                 String n = splitExp[i].substring(f + 1, s);
-                double sqrt = Double.parseDouble(n);
-                sqrt = this.c.sqrt(sqrt);
-                splitExp[i] = Double.toString(sqrt);
+                double res = Double.parseDouble(n);
+                if (splitExp[i].matches(sqrtRegex)) {
+                    res = this.c.sqrt(res);
+
+                } else if (splitExp[i].matches(cosRegex)) {
+                    res = this.c.cos(res);
+                } else if (splitExp[i].matches(sinRegex)) {
+                    res = this.c.sin(res);
+                }
+                splitExp[i] = Double.toString(res);
             }
+
         }
         //Now we have to look for all the divisions
         //and multiplications to compute them first.
@@ -149,38 +151,25 @@ public class OldCalculator {
 
         String[] splitExp = new String[exp.length()];
         Arrays.fill(splitExp, "");
-        boolean parsingNumber = true;
+        
         int j = 0;
         for (int i = 0; i < exp.length(); ++i) {
-            char c = exp.charAt(i);
-//            if (exp.charAt(i) == '*' || exp.charAt(i) == '/') {
-//                parsingNumber = false;
-//                splitExp[++j] += exp.charAt(i);
-//
-//            } else if (exp.charAt(i) == '+' || exp.charAt(i) == '-') {
-//                parsingNumber = false;
-//                splitExp[++j] += exp.charAt(i);
-//            } else {
-//                if (!parsingNumber) {
-//                    ++j;
-//                    parsingNumber = true;
-//                }
-//                splitExp[j] += exp.charAt(i);
-//
-//            }
-            if (c == '+' || c == '-') {
-                splitExp[++j] += c;
-            } else if (c == '*' || c == '/') {
-                splitExp[++j] += c;
+            char ch = exp.charAt(i);
+
+            if (ch == '+' || ch == '-') {
+                splitExp[++j] += ch;
+            } else if (ch == '*' || ch == '/') {
+                splitExp[++j] += ch;
                 ++j;
             } else {
-                splitExp[j] += c;
+                splitExp[j] += ch;
             }
 
         }
 
         ArrayList<String> utilityArray = new ArrayList<>(Arrays.asList(splitExp));
         Predicate<String> p = (s) -> s.equals("");
+       
         utilityArray.removeIf(p);
         splitExp = new String[0];
         splitExp = utilityArray.toArray(splitExp);
